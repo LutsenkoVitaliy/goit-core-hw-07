@@ -79,12 +79,20 @@ class AddressBook(UserDict):
 
   def get_upcoming_birthdays(self):
     current_year = datetime.now().year
-    now_date = datetime.today().date()
-    end_date = now_date + timedelta(days=7) # +7
 
     for contact in self.data.values():
       current_birthday = datetime(current_year, contact.birthday.value.month, contact.birthday.value.day) 
-      print(current_birthday)
+      if current_birthday.weekday() >= 5: #if Saturday or Sunday
+        current_birthday += timedelta(days=(7-current_birthday.weekday()))
+        greeting_date_str = current_birthday.strftime('%Y.%m.%d')
+        return f"{greeting_date_str}" 
+      else:
+        return f"В точку, привітати"
+
+
+      # greeting_date_str = current_birthday.strftime('%Y.%m.%d')
+      # print(greeting_date_str)
+
 
   def __str__(self):
     return "\n".join(str(contact) for contact in self.data.values())
@@ -106,5 +114,5 @@ jane_record.add_birthday("24.4.1997")
 book.add_record(jane_record)
 
 # Виведення всіх записів у книзі
-book.get_upcoming_birthdays()
+print(book.get_upcoming_birthdays())
 # print(book)
