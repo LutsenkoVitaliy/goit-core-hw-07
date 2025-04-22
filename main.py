@@ -89,11 +89,6 @@ class AddressBook(UserDict):
       else:
         return f"В точку, привітати"
 
-
-      # greeting_date_str = current_birthday.strftime('%Y.%m.%d')
-      # print(greeting_date_str)
-
-
   def __str__(self):
     return "\n".join(str(contact) for contact in self.data.values())
 
@@ -115,4 +110,4 @@ book.add_record(jane_record)
 
 # Виведення всіх записів у книзі
 print(book.get_upcoming_birthdays())
-# print(book)
+print(book)
