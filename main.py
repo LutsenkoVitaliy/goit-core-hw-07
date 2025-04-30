@@ -1,5 +1,6 @@
 from collections import UserDict
 from datetime import datetime, timedelta
+from functools import wraps
 import re
 
 class Field:
@@ -43,8 +44,8 @@ class Record:
   def add_phone(self, phone: str):
     self.phones.append(Phone(phone))
     
-  def remove_phone(self, phone: str): 
-    self.phones = [p for p in self.phones if p.value != phone]
+  # def remove_phone(self, phone: str): 
+  #   self.phones = [p for p in self.phones if p.value != phone]
 
   def find_phone(self, find_phone: str): 
     return next(filter(lambda phone: phone.value == find_phone, self.phones), None)
@@ -62,7 +63,8 @@ class Record:
     self.birthday = Birthday(birthday_str)
 
   def __str__(self):
-    return f"Contact name: {self.name.value}, phones: {'; '.join(p.value for p in self.phones)}, birthday: {self.birthday}"
+    return f"Contact name: {self.name.value}, phones: {'; '.join(p.value for p in self.phones)},\
+            birthday: {self.birthday.value.strftime('%d.%m.%Y') if self.birthday else "Birthday not for this contact."}"
 
 
 class AddressBook(UserDict): 
@@ -79,35 +81,21 @@ class AddressBook(UserDict):
 
   def get_upcoming_birthdays(self):
     current_year = datetime.now().year
+    birthday_list = []
 
     for contact in self.data.values():
-      current_birthday = datetime(current_year, contact.birthday.value.month, contact.birthday.value.day) 
-      if current_birthday.weekday() >= 5: #if Saturday or Sunday
-        current_birthday += timedelta(days=(7-current_birthday.weekday()))
-        greeting_date_str = current_birthday.strftime('%Y.%m.%d')
-        return f"{greeting_date_str}" 
-      else:
-        return f"В точку, привітати"
+      current_birthday = datetime(current_year, contact.birthday.value.month, contact.birthday.value.day)
+      data = current_birthday - datetime.now()
+      if data.days <= 7:
+        if current_birthday.weekday() >= 5:
+          current_birthday += timedelta(days=(7-current_birthday.weekday())) 
+          birthday_list.append({"name": contact.name.value, "birthday": current_birthday.strftime('%d.%m.%Y')})
+        else:
+          birthday_list.append({"name": contact.name.value, "birthday": current_birthday.strftime('%d.%m.%Y')})
+    return birthday_list
 
   def __str__(self):
     return "\n".join(str(contact) for contact in self.data.values())
 
 
-# Створення нової адресної книги
-book = AddressBook()
 
-# Створення запису для John
-john_record = Record('John')
-john_record.add_phone("1234567890")
-john_record.add_birthday("26.4.1996")
-book.add_record(john_record) 
-
-# Створення запису для Jane
-jane_record = Record("Jane")
-jane_record.add_phone("9876543210")
-jane_record.add_birthday("24.4.1997")
-book.add_record(jane_record)
-
-# Виведення всіх записів у книзі
-print(book.get_upcoming_birthdays())
-print(book)
