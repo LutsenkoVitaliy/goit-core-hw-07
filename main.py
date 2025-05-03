@@ -64,7 +64,7 @@ class Record:
 
   def __str__(self):
     return f"Contact name: {self.name.value}, phones: {'; '.join(p.value for p in self.phones)},\
-            birthday: {self.birthday.value.strftime('%d.%m.%Y') if self.birthday else "Birthday not for this contact."}"
+    birthday: {self.birthday.value.strftime('%d.%m.%Y') if self.birthday else 'Birthday not for this contact.'}"
 
 
 class AddressBook(UserDict): 
@@ -131,31 +131,61 @@ def add_contact(args, book: AddressBook):
     return message
 
 @input_error
-def change_contact(args, contacts):
-  name, phone = args
-  if name in contacts:
-    contacts[name] = phone
-  return "Contact phone number update."
+def change_contact(args, book: AddressBook):
+  name, old_number, new_number = args
+  contact = book.find(name)
+  if contact:
+    contact.edit_phone(old_number, new_number)
+    return "Contact phone number update."
+  return "Contact not found."
 
 @input_error
-def show_contact(args, contacts):
+def show_phone(args, book: AddressBook):
   name = args[0]
-  return f"{name}: {contacts[name]}"
+  contact = book.find(name)
+  if contact:
+    return str(contact)
+  return "Contact not found."
 
 @input_error
-def show_all_contacts(contacts):
-  if not contacts:
-    return "There are no contacts in phone book."
-  result = "\n".join(f"{name}: {phone}" for name, phone in contacts.items())
-  return result
+def show_all_contacts(book: AddressBook):
+  return str(book) if book.data else "There are no contacts in phone book."
+
+@input_error
+def add_birthday(args, book: AddressBook):
+  name, birthday = args
+  contact = book.find(name)
+  if contact:
+    contact.add_birthday(birthday)
+    return "Birthday added."
+  else:
+    return "Contact not found."
+  
+@input_error
+def show_birthday(args, book: AddressBook):
+  name = args[0]
+  contact = book.find(name)
+  if contact and contact.birthday:
+    return f"Contact {name}'s birthday is {contact.birthday.value.strftime('%d.%m.%Y')}"
+  elif contact:
+    return "Birthday not set for this contact."
+  else:
+    return "Contact not found."
+  
+@input_error
+def birthdays(book: AddressBook):
+  all_birthdays = book.get_upcoming_birthdays()
+  if not all_birthdays:
+    return "The birthday book is empty."
+  return '\n'.join(f"Contact {contact['name']}'s birthday is {contact['birthday']}" for contact in all_birthdays)
 
 
 def main():
-  contacts = {}
+  book = AddressBook()
   print("Welcome to the assistant bot!")
 
   while True:
-    user_input = input("Enter a command: ").strip().lower()
+    user_input = input("Enter a command: ").strip()
     command, *args = parse_input(user_input)
 
     if command in ["close", "exit"]:
@@ -164,13 +194,19 @@ def main():
     elif command == "hello":
       print("How can I help you?")
     elif command == "add":
-      print(add_contact(args, contacts))
+      print(add_contact(args, book))
     elif command == "change":
-      print(change_contact(args, contacts))
+      print(change_contact(args, book))
     elif command == "phone":
-      print(show_contact(args, contacts))
+      print(show_phone(args, book))
     elif command == "all":
-      print(show_all_contacts(contacts))
+      print(show_all_contacts(book))
+    elif command == "add-birthday":
+      print(add_birthday(args, book))
+    elif command == "show-birthday":
+      print(show_birthday(args, book))
+    elif command == "birthdays":
+      print(birthdays(book))
     else:
       print("Invalid command.")
 
